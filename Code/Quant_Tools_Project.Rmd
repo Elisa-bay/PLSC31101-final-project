@@ -1,0 +1,226 @@
+---
+title: "R-Code"
+author: "Elisa Bayoumi"
+date: "12/10/2020"
+output: pdf_document
+---
+
+```{r, packages, eval=FALSE}
+
+library(tidyverse)
+library(rtweet)
+library(lubridate)
+library(ggplot2)
+library(tm)
+library(wordcloud)
+```
+
+
+```{r, Use API, eval = FALSE}
+Trump_Tweets_1000 <- get_timeline(
+  user = "realdonaldtrump",
+  n = 1000,
+  include_rts = TRUE,
+  retryonratelimit = TRUE)
+#New element to preserve the 997 entries
+trump_tweets_997 <- Trump_Tweets_1000
+```
+
+```{r, flagged tweet URLs}
+#Broken it into parts because it runs more easily and helps find bugs
+flagged_url <- c(
+"https://twitter.com/realDonaldTrump/status/1336847458836631553",
+"https://twitter.com/realDonaldTrump/status/1336844470994821126",
+"https://twitter.com/realDonaldTrump/status/1336811823232921600",
+"https://twitter.com/realDonaldTrump/status/1336730906107768842",
+"https://twitter.com/realDonaldTrump/status/1336691515398250498",
+"https://twitter.com/realDonaldTrump/status/1336680803682693126",
+"https://twitter.com/realDonaldTrump/status/1336680713568071681",
+"https://twitter.com/realDonaldTrump/status/1336666810742149120",
+"https://twitter.com/realDonaldTrump/status/1336407510069161988",
+"https://twitter.com/realDonaldTrump/status/1336322408970559495",
+"https://twitter.com/realDonaldTrump/status/1336177638528983041",
+"https://twitter.com/realDonaldTrump/status/1336148836495069185",
+"https://twitter.com/realDonaldTrump/status/1336114633485266944",
+"https://twitter.com/realDonaldTrump/status/1335971721262796801", "https://twitter.com/realDonaldTrump/status/1335761079750766592", "https://twitter.com/realDonaldTrump/status/1335739297459265537", "https://twitter.com/realDonaldTrump/status/1335775535717289984", "https://twitter.com/realDonaldTrump/status/1335775501739307009", "https://twitter.com/realDonaldTrump/status/1335775434546548737", "https://twitter.com/realDonaldTrump/status/1335761079750766592", "https://twitter.com/realDonaldTrump/status/1335739297459265537", "https://twitter.com/realDonaldTrump/status/1335736235239804928", "https://twitter.com/realDonaldTrump/status/1335713485020401671", "https://twitter.com/ScottAdamsSays/status/1335620794861252608", "https://twitter.com/realDonaldTrump/status/1335663612954898434", "https://twitter.com/TeamTrump/status/1335377409584017409", "https://twitter.com/OANN/status/1334590527451250688")
+flagged_url <- c(flagged_url, "https://twitter.com/gatewaypundit/status/1334593386679050243", "https://twitter.com/christina_bobb/status/1334870568349405184", "https://twitter.com/MarkFinchem/status/1334890192327618560", "https://twitter.com/RudyGiuliani/status/1334959988306042882", "https://twitter.com/realDonaldTrump/status/1335462704006492160", "https://twitter.com/christina_bobb/status/1335258070633615361", "https://twitter.com/realDonaldTrump/status/1335460410267488261", "https://twitter.com/realDonaldTrump/status/1335413770139549697", "https://twitter.com/realDonaldTrump/status/1335406436247998464", "https://twitter.com/realDonaldTrump/status/1335052022530379776", "https://twitter.com/realDonaldTrump/status/1334994862299602947", "https://twitter.com/realDonaldTrump/status/1335057724485275656", "https://twitter.com/realDonaldTrump/status/1335057703568355330", "https://twitter.com/realDonaldTrump/status/1335052022530379776", "https://twitter.com/realDonaldTrump/status/1335032599283109890", "https://twitter.com/realDonaldTrump/status/1334994862299602947", "https://twitter.com/realDonaldTrump/status/1334949289160740866", "https://twitter.com/realDonaldTrump/status/1334858852337070083", "https://twitter.com/realDonaldTrump/status/1334848556176379907", "https://twitter.com/realDonaldTrump/status/1334670866051981312", "https://twitter.com/realDonaldTrump/status/1334617669316845580", "https://twitter.com/realDonaldTrump/status/1334611537688809472", "https://twitter.com/realDonaldTrump/status/1334606278388277253", "https://twitter.com/realDonaldTrump/status/1334573529107460096") 
+flagged_url <- c(flagged_url, "https://twitter.com/TeamTrump/status/1334569329334083586", "https://twitter.com/TeamTrump/status/1334566301205925889", "https://twitter.com/realDonaldTrump/status/1334351957113311233", "https://twitter.com/realDonaldTrump/status/1334327894844248070", "https://twitter.com/realDonaldTrump/status/1334327603340201984", "https://twitter.com/realDonaldTrump/status/1334327470972137474", "https://twitter.com/realDonaldTrump/status/1334327204847775744", "https://twitter.com/realDonaldTrump/status/1334326746615865344", "https://twitter.com/realDonaldTrump/status/1334303260279234562", "https://twitter.com/realDonaldTrump/status/1334282156349267970", "https://twitter.com/AZGOP/status/1334165432161374209", "https://twitter.com/realDonaldTrump/status/1334240039639937026", "https://twitter.com/realDonaldTrump/status/1334167828035989506", "https://twitter.com/realDonaldTrump/status/1334167769575796739", "https://twitter.com/realDonaldTrump/status/1334001184298905601", "https://twitter.com/realDonaldTrump/status/1334155285909409801", "https://twitter.com/realDonaldTrump/status/1334001184298905601", "https://twitter.com/realDonaldTrump/status/1333988969785257984", "https://twitter.com/realDonaldTrump/status/1333975991518187521", "https://twitter.com/LouDobbs/status/1333912209311805446", "https://twitter.com/realDonaldTrump/status/1333888306178908163", "https://twitter.com/realDonaldTrump/status/1333856259662077954", "https://twitter.com/realDonaldTrump/status/1333773762374807553", "https://twitter.com/realDonaldTrump/status/1333772740483026944", "https://twitter.com/realDonaldTrump/status/1333771923214491648", "https://twitter.com/realDonaldTrump/status/1333771177005867008", "https://twitter.com/iheartmindy/status/1329901868315623424")
+flagged_url <- c(flagged_url, "https://twitter.com/KamVTV/status/1333479464089628679", "https://twitter.com/thebradfordfile/status/1333562182232104965", "https://twitter.com/realDonaldTrump/status/1333615151904395264", "https://twitter.com/realDonaldTrump/status/1333558773152161793", "https://twitter.com/realDonaldTrump/status/1333558147512999938", "https://twitter.com/realDonaldTrump/status/1333464453778706433", "https://twitter.com/realDonaldTrump/status/1333410418119864320", "https://twitter.com/realDonaldTrump/status/1333410419554344964", "https://twitter.com/realDonaldTrump/status/1333244506871918599", "https://twitter.com/LizRNC/status/1333033172783738880", "https://twitter.com/realDonaldTrump/status/1333243285389914112", "https://twitter.com/realDonaldTrump/status/1333215466022727686", "https://twitter.com/realDonaldTrump/status/1333207778643628032", "https://twitter.com/realDonaldTrump/status/1333084358446551042", "https://twitter.com/realDonaldTrump/status/1333084321863888896", "https://twitter.com/realDonaldTrump/status/1333084257858834438", "https://twitter.com/realDonaldTrump/status/1332778938121203720") 
+flagged_url <- c(flagged_url, "https://twitter.com/realDonaldTrump/status/1332776310196883461", "https://twitter.com/realDonaldTrump/status/1332552283553476608", "https://twitter.com/SenMastriano/status/1332398733401591808", "https://twitter.com/realDonaldTrump/status/1332407714304110597", "https://twitter.com/realDonaldTrump/status/1332380892682215424", "https://twitter.com/realDonaldTrump/status/1332352538855747584", "https://twitter.com/realDonaldTrump/status/1332349861774155778", "https://twitter.com/realDonaldTrump/status/1332337895584264197", "https://twitter.com/OANN/status/1331984934253125632", "https://twitter.com/OANN/status/1332002206208249856", "https://twitter.com/newsmax/status/1332264150312038400", "https://twitter.com/realDonaldTrump/status/1331987171700510720", "https://twitter.com/realDonaldTrump/status/1332317394165968899", "https://twitter.com/realDonaldTrump/status/1332317347722498048", "https://twitter.com/realDonaldTrump/status/1331987171700510720", "https://twitter.com/LLinWood/status/1331753058024517634", "https://twitter.com/realDonaldTrump/status/1331761131120103424", "https://twitter.com/Cernovich/status/1331707452304228352", "https://twitter.com/i/events/1308626736066617344", "https://twitter.com/replouiegohmert/status/1330606002299920387") 
+flagged_url <- c(flagged_url, "https://twitter.com/realDonaldTrump/status/1331750037777510404", "https://twitter.com/realDonaldTrump/status/1331738816856666114", "https://twitter.com/realDonaldTrump/status/1331695288231333890", "https://twitter.com/realDonaldTrump/status/1331684437705302018", "https://twitter.com/realDonaldTrump/status/1331655154492448770", "https://twitter.com/Lrihendry/status/1331127441604145152", "https://twitter.com/realDonaldTrump/status/1331214247955738624", "https://twitter.com/LLinWood/status/1331315679321092097", "https://twitter.com/VicToensing/status/1329053473657249797", "https://twitter.com/VicToensing/status/1331249032006602753", "https://twitter.com/Lrihendry/status/1331390178624229376", "https://twitter.com/toddeherman/status/1331393990957047808", "https://twitter.com/justin_hart/status/1329886440449138689", "https://twitter.com/realDonaldTrump/status/1331393812728573952", "https://twitter.com/realDonaldTrump/status/1331225404351373313", "https://twitter.com/realDonaldTrump/status/1331219093563781122", "https://twitter.com/realDonaldTrump/status/1331214247955738624", "https://twitter.com/realDonaldTrump/status/1331086969183621120", "https://twitter.com/realDonaldTrump/status/1331057517095489539", "https://twitter.com/realDonaldTrump/status/1330737141794676736", "https://twitter.com/realDonaldTrump/status/1330732289018503170", "https://twitter.com/realDonaldTrump/status/1330367988621594625", "https://twitter.com/realDonaldTrump/status/1330555645213483016", "https://twitter.com/realDonaldTrump/status/1330487246236028935", "https://twitter.com/realDonaldTrump/status/1330137267680186371", "https://twitter.com/realDonaldTrump/status/1330374020613758977", "https://twitter.com/realDonaldTrump/status/1330367988621594625", "https://twitter.com/realDonaldTrump/status/1330368206968643584", "https://twitter.com/realDonaldTrump/status/1330368448552169474", "https://twitter.com/ChanelRion/status/1330196983966019586")
+flagged_url <- c(flagged_url, "https://twitter.com/realDonaldTrump/status/1330351724553441282", "https://twitter.com/realDonaldTrump/status/1330351802508775426", "https://twitter.com/realDonaldTrump/status/1330327620148465664", "https://twitter.com/realDonaldTrump/status/1330325425667629058", "https://twitter.com/realDonaldTrump/status/1330323589170663426", "https://twitter.com/realDonaldTrump/status/1330319748660416513", "https://twitter.com/realDonaldTrump/status/1330259856662654978", "https://twitter.com/realDonaldTrump/status/1330248268656357376", "https://twitter.com/realDonaldTrump/status/1330137741078695939", "https://twitter.com/realDonaldTrump/status/1330137267680186371", "https://twitter.com/realDonaldTrump/status/1329963571250335744", "https://twitter.com/realDonaldTrump/status/1329963296854847492", "https://twitter.com/realDonaldTrump/status/1329963239170564098", "https://twitter.com/realDonaldTrump/status/1329871775707107335", "https://twitter.com/realDonaldTrump/status/1329871776889925636", "https://twitter.com/realDonaldTrump/status/1329784812257890306", "https://twitter.com/realDonaldTrump/status/1329780467663564806", "https://twitter.com/realDonaldTrump/status/1329761125404205057", "https://twitter.com/realDonaldTrump/status/1329760015314464770", "https://twitter.com/mtgreenee/status/1329261913834991616", "https://twitter.com/realDonaldTrump/status/1329298668403499009", "https://twitter.com/realDonaldTrump/status/1329521429575049231", "https://twitter.com/realDonaldTrump/status/1329478149609041927", "https://twitter.com/realDonaldTrump/status/1329459995893764102", "https://twitter.com/realDonaldTrump/status/1329424134166687744", "https://twitter.com/realDonaldTrump/status/1329405682706247683", "https://twitter.com/realDonaldTrump/status/1329401626763943936", "https://twitter.com/LizRNC/status/1329115371383697408")
+flagged_url <- c(flagged_url, "https://twitter.com/realDonaldTrump/status/1329298668403499009", "https://twitter.com/realDonaldTrump/status/1329093126238203905", "https://twitter.com/realDonaldTrump/status/1329087255168708608", "https://twitter.com/realDonaldTrump/status/1329086548093014022", "https://twitter.com/realDonaldTrump/status/1329075487553974275", "https://twitter.com/realDonaldTrump/status/1329069814195871744", "https://twitter.com/realDonaldTrump/status/1329065945160175616", "https://twitter.com/realDonaldTrump/status/1329064787142172673", "https://twitter.com/realDonaldTrump/status/1329060562442067969", "https://twitter.com/realDonaldTrump/status/1329054683441278977", "https://twitter.com/realDonaldTrump/status/1328448530504163329", "https://twitter.com/realDonaldTrump/status/1328856932011167744", "https://twitter.com/realDonaldTrump/status/1328852352787484677", "https://twitter.com/realDonaldTrump/status/1328852354049957888", "https://twitter.com/realDonaldTrump/status/1328830381429288962")
+flagged_url <- c(flagged_url, "https://twitter.com/realDonaldTrump/status/1328448530504163329", "https://twitter.com/realDonaldTrump/status/1328382287331856384", "https://twitter.com/realDonaldTrump/status/1328361451497664512", "https://twitter.com/realDonaldTrump/status/1328338241284616193", "https://twitter.com/realDonaldTrump/status/1328334945148952576", "https://twitter.com/alexbruesewitz/status/1327703244949377025", "https://twitter.com/alexbruesewitz/status/1327804135282978817", "https://twitter.com/realDonaldTrump/status/1328328547598000130", "https://twitter.com/realDonaldTrump/status/1328325907401093121", "https://twitter.com/realDonaldTrump/status/1328200072987893762", "https://twitter.com/kylenabecker/status/1327511568993701888", "https://twitter.com/realDonaldTrump/status/1328152465016020993", "https://twitter.com/realDonaldTrump/status/1328152466752491526", "https://twitter.com/realDonaldTrump/status/1328093294782509060", "https://twitter.com/realDonaldTrump/status/1327979630477922304")
+flagged_url <-c(flagged_url, "https://twitter.com/realDonaldTrump/status/1327978710809661440", "https://twitter.com/GreggJarrett/status/1326250909282742276", "https://twitter.com/realDonaldTrump/status/1327960545929072645", "https://twitter.com/realDonaldTrump/status/1327958640309972992", "https://twitter.com/realDonaldTrump/status/1327956491056279552", "https://twitter.com/realDonaldTrump/status/1327952603318194178", "https://twitter.com/realDonaldTrump/status/1327750127679889409", "https://twitter.com/realDonaldTrump/status/1327708998662025216", "https://twitter.com/realDonaldTrump/status/1327717286778638340", "https://twitter.com/realDonaldTrump/status/1327717223142731779",
+"https://twitter.com/realDonaldTrump/status/1327716728558772226", "https://twitter.com/realDonaldTrump/status/1327715767916392449", "https://twitter.com/realDonaldTrump/status/1327708998662025216", "https://twitter.com/realDonaldTrump/status/1327704841964183552", "https://twitter.com/realDonaldTrump/status/1327619653020110850", "https://twitter.com/realDonaldTrump/status/1327619654592892931", "https://twitter.com/realDonaldTrump/status/1327481814013906944")
+flagged_url <- c(flagged_url, "https://twitter.com/DanScavino/status/1324578579250843648", "https://twitter.com/realDonaldTrump/status/1327438487537246210", "https://twitter.com/realDonaldTrump/status/1327413534901350400", "https://twitter.com/realDonaldTrump/status/1327103335195938817", "https://twitter.com/realDonaldTrump/status/1327407964404260870", "https://twitter.com/jmclghln/status/1326910605618503687", "https://twitter.com/realDonaldTrump/status/1327350069947936768", "https://twitter.com/realDonaldTrump/status/1327319294057848832", "https://twitter.com/realDonaldTrump/status/1327279929319432200", "https://twitter.com/realDonaldTrump/status/1327103335195938817", "https://twitter.com/realDonaldTrump/status/1327095398712946695", "https://twitter.com/realDonaldTrump/status/1326926226888544256", "https://twitter.com/ksorbs/status/1325176443215749121", "https://twitter.com/TrumpStudents/status/1326020907379400706", "https://twitter.com/realDonaldTrump/status/1326906607154900998", "https://twitter.com/realDonaldTrump/status/1326894138516774913", "https://twitter.com/realDonaldTrump/status/1326875863657361409", "https://twitter.com/realDonaldTrump/status/1326740844427304960", "https://twitter.com/TrumpWarRoom/status/1326721355107151872")
+flagged_url <- c(flagged_url, "https://twitter.com/jonvoight/status/1326323889417322497", "https://twitter.com/realDonaldTrump/status/1326679385966047236", "https://twitter.com/realDonaldTrump/status/1326630618831130624", "https://twitter.com/realDonaldTrump/status/1326525851752656898", "https://twitter.com/realDonaldTrump/status/1326353226749386757", "https://twitter.com/realDonaldTrump/status/1326348976531136513", "https://twitter.com/realDonaldTrump/status/1326347841476890627", "https://twitter.com/realDonaldTrump/status/1326327582074220544", "https://twitter.com/realDonaldTrump/status/1326315284169445376", "https://twitter.com/realDonaldTrump/status/1326186297157963777", "https://twitter.com/realDonaldTrump/status/1326186126709821440", "https://twitter.com/realDonaldTrump/status/1325967327611981829", "https://twitter.com/realDonaldTrump/status/1325967220757966852", "https://twitter.com/realDonaldTrump/status/1325966661942435841")
+```
+
+```{r, function and get status ID}
+get_status_id <- function(URL){
+  #removing URL beginning
+  URL <- str_split(URL, "status/")[[1]]
+  #getting second half of split
+  status_id <- tail(URL, 1)
+  return(status_id)
+}
+flagged_status_id <- map_chr(flagged_url, get_status_id)
+```
+
+
+```{r, flagging data}
+#Resaved to manipulate dataset
+trump_tweets_total <- trump_tweets_997
+trump_tweets_total <- trump_tweets_total %>%
+  mutate("flag" = trump_tweets_total$status_id%in%flagged_status_id)%>%
+  #reversee booleans for appearances - flagged AS true or AS false
+  mutate("flag" = !flag)%>%
+  #Select columns for analysis
+  select(created_at, status_id, text, favorite_count, retweet_count, flag)
+```
+
+The second part is cutting off any extra tweets from the total data set if we are unable to check if they are flagged or not (Twitter will only allow users to view tweets posted 28 days earlier for @RealDonaldTrump). This second factor should be disregarded if researchers have access to all of @RealDonaldTrump's tweets and can account for flagged tweets prior to the 28 day mark.
+
+```{r, cutting unchecked tweets}
+#Get the last entry
+last_flag <- tail(flagged_status_id, n=1)
+
+#Get all data for last entry
+last_created <- trump_tweets_total%>%
+  filter(status_id == last_flag)
+
+#Get date for last entry
+last_created <- last_created$created_at
+
+#filter out data created before last entry
+trump_tweets_total <- trump_tweets_total%>%
+  filter(created_at >= last_created)
+
+#Save data
+write.csv(trump_tweets_total, "Trump_Tweets_flagged_unflagged.csv")
+```
+
+
+```{r, daily time series}
+ts_total <- trump_tweets_total%>%
+  #Simplify date
+  mutate(created_at = round_date(created_at, unit = "day"))%>%
+  group_by(created_at, flag)%>%
+  dplyr::count()
+
+ts_day <- ggplot(ts_total, aes(x = created_at, fill = flag)) +
+  geom_col(aes(y=n))+
+  ylab("Number of Tweets")+#y label
+  xlab("Time (Nov. 9th, 2020 - Dec. 7th, 2020)")+#x label
+  ggtitle("Trump's Flagged vs. Unflagged Tweets Per Day (Stacked)")
+ggsave(filename="time_series_day.png", plot=ts_day)#save to wd
+```
+
+```{r, weekly time series}
+#Creating dataframe for ggplot
+ts_week <- trump_tweets_total%>%
+  #Simplify date
+  mutate(created_at = round_date(created_at, unit = "week"))%>%
+  group_by(created_at, flag)%>%
+  dplyr::count()
+
+#ggplot graph
+ts_week <- ggplot(ts_week, aes(x = created_at, fill = flag)) +
+  geom_col(aes(y=n))+
+  ylab("Number of Tweets")+#y label
+  xlab("Time (Nov. 9th, 2020 - Dec. 7th, 2020)")+#x label
+  ggtitle("Trump's Flagged vs. Unflagged Tweets Per Week (Stacked)")
+ggsave(filename="time_series_week.pdf", plot=ts_week) #save to wd
+```
+
+Now, retweets and favorites stuff:
+
+```{r, popularity of tweets}
+retwli_total <- trump_tweets_total%>%
+  mutate(created_at = round_date(created_at, unit = "day"))%>%
+  group_by(created_at, flag)%>%
+  #Average count per day by favorites and retweets
+  summarise(favorite_count = sum(favorite_count)/nrow(retwli_total),
+         retweet_count = sum(retweet_count)/nrow(retwli_total))%>%
+  #Added an extra column b/c will collapse with unite
+  mutate(flag2 = flag) %>%
+  gather(key = "retweet_fav", value = "count", -c(created_at, flag, flag2))%>%
+  #Uniting for labels
+  unite(col = "retweet_fav_flag", c(retweet_fav, flag2))
+
+#GGplot
+retwli <- ggplot(retwli_total, aes(x = created_at, y = count, group = interaction(retweet_fav_flag, flag), color = flag)) +
+  geom_smooth()+
+  xlab("Time (Nov. 9th, 2020 - Dec. 7th, 2020)")+#x label
+  ylab("Number of Retweets or Favorites")+#y
+  ggtitle("Retweets and Favorites of Flagged vs. Unflagged Trump Tweets Per Day")
+
+#Labels failed
+
+ggsave(filename="Retweets_faves_flagged_v_unflagged.pdf", plot=retwli)
+```
+
+
+Unique words study:
+```{r, text frequency processing}
+dtm <- trump_tweets_total%>%
+  #Arrange it to sort and separate later
+  arrange(desc(flag))%>% 
+  select(text)#only interested in text
+
+#For separate later
+n_unflagged <- sum(trump_tweets_total$flag)
+n_columns <- nrow(trump_tweets_total)
+
+#preprocessing
+dtm <- Corpus(VectorSource(dtm$text))
+dtm <- DocumentTermMatrix(dtm,
+           control = list(tolower = TRUE,
+                          removePunctuation = TRUE,
+                          removeNumbers = TRUE,
+                          stopwords = TRUE,
+                          stemming=TRUE))
+dtm.m <- as.data.frame(as.matrix(dtm))
+# These words are not important but get through preprocessing
+dtm.m$this <- NULL 
+dtm.m$has <- NULL
+dtm.m$will <- NULL
+dtm.m$get <- NULL
+#also keeps retweets/hashtags
+
+#Separation for counting
+unflagged_words <- dtm.m[1:n_unflagged,]
+flagged_words <- dtm.m[(n_unflagged+1):n_columns,]
+
+# Subset into 2 DTMs, 1 for each speaker
+#frequency per document becayse of large difference is number of tokens
+unflagged_words <- colSums(unflagged_words)/nrow(unflagged_words) 
+flagged_words <- colSums(flagged_words)/nrow(flagged_words)
+
+#Get frequencies
+freq <- flagged_words - unflagged_words
+
+# Sort the words
+freq <- sort(freq, decreasing = T)
+```
+
+```{r, Creating Wordcloud}
+#Top words in flagged tweets
+set.seed(123)#ensures reproducability
+wordcloud(names(freq), freq, max.words=100, random.color = F, colors = (brewer.pal(8,"Dark2")))
+
+# Top words in non-flagged tweets
+set.seed(123)#ensures reproducability
+wordcloud(names(freq), -freq, max.words=100, random.color = F, colors = (brewer.pal(8,"Dark2")))
+#To print, run in RScript
+
+#Warnings:
+# realdonaldtrump could not be fit on page. It will not be plotted.
+# senat could not be fit on page. It will not be plotted.
+# counti could not be fit on page. It will not be plotted.
+# new could not be fit on page. It will not be plotted.
+
+```
+
+
